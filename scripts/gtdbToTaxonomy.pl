@@ -1,4 +1,8 @@
 #!/usr/bin/env perl
+## This script has been changed on the base of GTDB release 89
+## Test data is from fastani/database 
+## Have to uncompress all genomic fna in the directory
+## gzipped fna will be supported in the future
 
 use strict;
 use warnings;
@@ -107,8 +111,9 @@ sub main{
     }
 
     # Copy or download the file
-    if($$fastaIndex{$assemblyId} && (stat($filename))[7] > 0){
-      logmsg "copying from $$fastaIndex{$assemblyId}...";
+    if($$fastaIndex{$assemblyId} && (stat($$fastaIndex{$assemblyId}))[7] > 0){ 
+      ##Correct the error of the original one, if $filename dose not exists , stat[7] will return 0
+      logmsg "linking from $$fastaIndex{$assemblyId}...";
       #cp($$fastaIndex{$assemblyId}, "$filename.tmp") or die $!;
       link($$fastaIndex{$assemblyId}, "$filename.tmp") or die $!;
     } else {
@@ -159,7 +164,9 @@ sub fastaIndex{
     # Transform the accession to simply the number.
     my $accession=basename($File::Find::name);
     # Remove any other extensions actually
-    $accession=~s/\..+$//;
+    $accession=~s/(\.\d+|)_genomic.+$//;
+    ## To match the R89. My testing data is gtdb_r89_data/fastani/database/*.fna.gz 
+    ## Unzip all my genome fna here and run this script to generate a proper library for Kraken.
     # remove leading prefix with underscore, e.g., GCA_
     #$accession=~s/^.*_+//;
     # Remove 0 padding
