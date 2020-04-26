@@ -14,7 +14,7 @@ def parseAsm2ID(asm2id): #Parse Assembly ID to Taxid List
             ass2id[asmid]=taxid
     return ass2id
 
-def parsingGTDBtax(outdir,gtdbtax_file):
+def parsingGTDBtax(outdir,gtdbtax_file): #Building a nodes.dmp and names.dmp based on the GTDB taxonomy File
     taxdir=os.path.join(outdir,"taxonomy")
     if not os.path.exists(taxdir):
         os.mkdir(taxdir)
@@ -27,8 +27,9 @@ def parsingGTDBtax(outdir,gtdbtax_file):
     with open(gtdbtax_file,'r') as handle:
         for line in handle.readlines():
             line=line.strip()
-            arr=line.split('\s+')
+            arr=line.split('\t')
             asm=arr[0]
+            asm=re.sub(r'(RS_|GB_)','',asm)
             tax_arr=arr[1].split(';')
             for tax in tax_arr:
                 rans,sciname=tax_arr[i].split('__')
@@ -44,7 +45,7 @@ def parsingGTDBtax(outdir,gtdbtax_file):
             asm2id[asm]=taxon_dict[tax]
     return asm2id
 
-def addKraken(outdir,fna_file,ass2id):
+def addKraken(outdir,fna_file,ass2id): #Transforming the input fna in a Kraken2-readable fna
     file_name=os.path.basename(fna_file)
     asmid=re.sub(r'_genomic.fna','',file_name)
     if asmid in ass2id:
@@ -61,15 +62,29 @@ def addKraken(outdir,fna_file,ass2id):
     
 def main():
     parser=argparse.ArgumentParser()
-    parser.add_argument("--fna_dir",help='Directory to store')
+    parser.add_argument('--fna_dir',help='Directory to store',required=True)
     parser.add_argument('--taxid',help='Assembly ID to Taxid file')
-    parser.add_argument('--outdir',help='Output Directory')
+    parser.add_argument('--outdir',help='Output Directory',required=True)
+    parser.add_argument('--gtdbtax',help='Under testing, GTDB Taxonomy File, confilct with --taxid')
     args=parser.parse_args()
-    
+    try:
+        if args.fna_dir is None or args.outdir is None:
+            parser.print_help()
+            sys.exit(1)
+        elif args.taxid is None and args.gtdbtax is None:
+            parser.print_help()
+            sys.exit(1)
+        elif args.taxid and args.gtdbtax:
+            parser.print_help()
+            sys.exit(1)
+
     logging.basicConfig(filename='./genome2kraken.log', level=logging.INFO)
     #Parse Assembly ID to Taxid List
-    logging.info('Starting to Parse Assembly2Taxid File\n')
-    ass2id=parseAsm2ID(args.taxid)
+    logging.info('Starting to Parse Taxonomy File\n')
+    if args.taxid:
+        ass2id=parseAsm2ID(args.taxid)
+    elif args.gtdbtax:
+        ass2id=parsingGTDBtax(args.outdir,args.gtdbtax_file)
     logging.info('Finished\n')
 
     #Add taxid to kraken lib fna
