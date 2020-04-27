@@ -52,7 +52,8 @@ def addKraken(outdir,fna_file,ass2id): #Transforming the input fna in a Kraken2-
         logging.info('Parsing '+fna_file+'...')
         arr=[]
         for seq_rec in SeqIO.parse(fna_file,"fasta"):
-            seq_rec.id=seq_rec.id+'|kraken:taxid|'+taxid
+            seq_rec.id=seq_rec.id+'|kraken:taxid|'+taxid #This is still able to be recognized by the scan_fasta_file.pl
+            #seq_rec.id='kraken:taxid|'+taxid+'|'+seq_rec.id <- this is the official recommended kraken seq id.
             arr.append(seq_rec)
         SeqIO.write(arr,os.path.join(outdir,file_name),"fasta")
         logging.info('Finished\n')
@@ -80,13 +81,14 @@ def main():
 
     logging.basicConfig(filename='./genome2kraken.log', level=logging.INFO)
     #Parse Assembly ID to Taxid List
+    #logging.info(os.system('date'))
     logging.info('Starting to Parse Taxonomy File\n')
     if args.taxid:
         ass2id=parseAsm2ID(args.taxid)
     elif args.gtdbtax:
         ass2id=parsingGTDBtax(args.outdir,args.gtdbtax_file)
     logging.info('Finished\n')
-
+    #logging.info(os.system('date'))
     #Add taxid to kraken lib fna
     t_start=time.time()
     pool=multiprocessing.Pool(10)
@@ -99,7 +101,9 @@ def main():
     pool.join()
     t_end=time.time()
     t=t_end-t_start
-    logging.info('the programe time is %s') %t            
+    logging.info('the programe time is %s') % str(t)           
     logging.info('Done\n')
+    #logging.info(os.system('date'))
+
 
 main()
