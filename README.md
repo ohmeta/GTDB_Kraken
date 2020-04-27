@@ -56,3 +56,22 @@ You can optionally remove all intermediate fasta files and also run the clean ut
 
 * Henk den Bakker @hcdenbakker
 * Lee Katz @lskatz
+
+
+## Modifier
+
+* Jiahui Zhu @magcurly
+
+## Following Rewrite information
+
+### Low efficiency in the original script
+
+I found it's quite slow using the original scripts since the low efficiency by processing genomes one by one. Besides, I found some bugs in the original scripts. I fixed some of the bugs in the perl script while I rewrote the perl scripts to a python one. This python script (Under Python3) is fit for those who already download the gtdb release 89 data pack (especially for those who use GTDBtk). I testified it with 24706 representative genomes selected by GTDB. You can find your taxfile in gtdb taxonomy/ dicrectory (unpack the gtdb tar.gz first) and your fna files in fastani/database/. Since I have to test it with the original perl script, I gunzipped all fna.gz.
+
+You have to noticed that I use multiprocessing in the python script in order to improve the process speed.
+
+### Requirement package for the python script
+
+ - biopython
+ - multiprocessing
+ - gzip

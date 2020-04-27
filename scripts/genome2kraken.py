@@ -1,4 +1,4 @@
-import sys,os,re,argparse,logging
+import sys,os,re,argparse,logging,gzip
 import multiprocessing
 from Bio import SeqIO
 
@@ -46,26 +46,35 @@ def parsingGTDBtax(outdir,gtdbtax_file): #Building a nodes.dmp and names.dmp bas
     return asm2id
 
 def addKraken(outdir,fna_file,ass2id): #Transforming the input fna in a Kraken2-readable fna
+    all_file=os.path.join(outdir,'library.fna')
     file_name=os.path.basename(fna_file)
-    asmid=re.sub(r'_genomic.fna','',file_name)
+    if re.search(r'gz',file_name): #Support Gzipped file
+        asmid=re.sub(r'_genomic.fna.gz','',file_name)
+        handle=gzip.open(fna_file,'rt')
+    else: 
+        asmid=re.sub(r'_genomic.fna','',file_name)
+        handle=open(fna_file,'r')
+
     if asmid in ass2id:
         logging.info('Parsing '+fna_file+'...')
         arr=[]
-        for seq_rec in SeqIO.parse(fna_file,"fasta"):
+        for seq_rec in SeqIO.parse(handle,"fasta"):
             seq_rec.id=seq_rec.id+'|kraken:taxid|'+taxid #This is still able to be recognized by the scan_fasta_file.pl
             #seq_rec.id='kraken:taxid|'+taxid+'|'+seq_rec.id <- this is the official recommended kraken seq id.
             arr.append(seq_rec)
         SeqIO.write(arr,os.path.join(outdir,file_name),"fasta")
+        SeqIO.write(arr,all_file,'fasta') #To output to a general library.fna
         logging.info('Finished\n')
     else:
         logging.error(asmid+' is not in taxon list\n')
+    handle.close()
 
     
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--fna_dir',help='Directory to store',required=True)
     parser.add_argument('--taxid',help='Assembly ID to Taxid file')
-    parser.add_argument('--outdir',help='Output Directory',required=True)
+    parser.add_argument('--outdir',default='./kraken_library',help='Output kraken Directory',required=True)
     parser.add_argument('--gtdbtax',help='Under testing, GTDB Taxonomy File, confilct with --taxid')
     args=parser.parse_args()
     try:
@@ -79,7 +88,7 @@ def main():
             parser.print_help()
             sys.exit(1)
 
-    logging.basicConfig(filename='./genome2kraken.log', level=logging.INFO)
+    logging.basicConfig(filename=os.path.join(outdir,'genome2kraken.log'), level=logging.INFO)
     #Parse Assembly ID to Taxid List
     #logging.info(os.system('date'))
     logging.info('Starting to Parse Taxonomy File\n')
@@ -94,8 +103,9 @@ def main():
     pool=multiprocessing.Pool(10)
 
     for fna_file in os.listdir(args.fna_dir):
+        if os.path.splitext(fna_file)[1]!='.fna' and os.path.splitext(os.path.splitext(fna_file)[0])[1]!='.fna': continue #Checking file suffix
         fna_abs=os.path.abspath(os.path.join(args.fna_dir,fna_file))
-        pool.apply_async(run_ak,(args.outdir,fna_abs,ass2id))
+        pool.apply_async(addKraken,(args.outdir,fna_abs,ass2id))
     
     pool.close()
     pool.join()
