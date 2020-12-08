@@ -75,3 +75,8 @@ You have to noticed that I use multiprocessing in the python script in order to 
  - biopython
  - multiprocessing
  - gzip
+
+### Attention!
+
+If you want to use it on Bracken, don't forget to add the root "1" in the nodes.dmp file.
+Another script has been added for GTDBtk result.
