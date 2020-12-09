@@ -1,7 +1,8 @@
-import sys,os,re,argparse,logging,gzip
+import sys,os,re,argparse,gzip
 import multiprocessing
 from Bio import SeqIO
 import gtdb_result_transfer
+import logging
 
     
 def main():
@@ -13,6 +14,7 @@ def main():
     parser.add_argument('--gtdbtax',help='GTDB Taxonomy File')
     parser.add_argument('--gtdbres',help='GTDBtk Result. All summary.tsv has to be combined')
     args=parser.parse_args()
+    
     try:
         if args.gtdbres is None and args.gtdbtax is None:
             parser.print_help()
@@ -20,26 +22,26 @@ def main():
         elif args.gtdbres and args.gtdbtax:
             parser.print_help()
             sys.exit(1)
-
-    #Parse Assembly ID to Taxid List  
-    logging.basicConfig(filename=os.path.join(args.outdir,'genome2kraken.log'), level=logging.INFO)
+    except:
+        logging.basicConfig(filename=os.path.join(args.outdir,'genome2kraken.log'),level=logging.INFO)
+    
     logging.info('Starting to Parse Taxonomy File\n')
     if args.gtdbres:
-        ass2id=parse_gtdb_result(args.taxid)
+        ass2id=gtdb_result_transfer.parse_gtdb_result(args.outdir,args.gtdbres)
         mode='gtdbres'
     elif args.gtdbtax:
-        ass2id=parsingGTDBtax(args.outdir,args.gtdbtax)
+        ass2id=gtdb_result_transfer.parsingGTDBtax(args.outdir,args.gtdbtax)
         mode='gtdbtax'
     logging.info('Finished\n')
     
-    if args.fna_dir: 
+    if args.fa_dir: 
     #Add taxid to kraken lib fna
         t_start=time.time()
         pool=multiprocessing.Pool(10)
         for fna_file in os.listdir(args.fna_dir):
-            fna_abs=os.path.abspath(os.path.join(args.fna_dir,fna_file))
+            fna_abs=os.path.abspath(os.path.join(args.fa_dir,fna_file))
             if os.path.splitext(fna_abs)[1]!='.'+args.suffix: continue #Checking file suffix
-            pool.apply_async(addKraken,(args.outdir,fna_abs,ass2id))
+            pool.apply_async(gtdb_result_transfer.addKraken,(args.outdir,fna_abs,ass2id,mode))
     
         pool.close()
         pool.join()
@@ -47,5 +49,4 @@ def main():
         t=t_end-t_start
         logging.info('the programe time is %f' % t) 
     logging.info('Done\n')
-
 main()
