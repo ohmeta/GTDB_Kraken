@@ -21,9 +21,8 @@ def main():
             parser.print_help()
             sys.exit(1)
 
-    logging.basicConfig(filename=os.path.join(outdir,'genome2kraken.log'), level=logging.INFO)
-
-    #Parse Assembly ID to Taxid List
+    #Parse Assembly ID to Taxid List  
+    logging.basicConfig(filename=os.path.join(args.outdir,'genome2kraken.log'), level=logging.INFO)
     logging.info('Starting to Parse Taxonomy File\n')
     if args.gtdbres:
         ass2id=parse_gtdb_result(args.taxid)
