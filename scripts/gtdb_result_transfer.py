@@ -13,7 +13,8 @@ def parse_gtdb_result(outdir,gtdb_result):
     name_out=open(os.path.join(taxdir,"names.dmp"),'w')
     rank={'d':'domain','p':'phylum','c':"class",'o':'order','f':'family','g':'genus','s':'species'}
     taxon_dict={'root':1}
-    node.write('\t|\t'.join(['1','1','no rank','','8','0','1','0','0','0','1','0','1',''])+'\t|\n')
+    node_out.write('\t|\t'.join(['1','1','no rank','','8','0','1','0','0','0','1','0','1',''])+'\t|\n')
+    name_out.write('\t|\t'.join(['1','root','','scientific name'])+'\t|\n')
     taxon_count=1
     with open(gtdb_result,'r') as handle:
         next(handle)
@@ -57,6 +58,7 @@ def parsingGTDBtax(outdir,gtdbtax_file): #Building a nodes.dmp and names.dmp bas
     name_out=open(os.path.join(taxdir,"names.dmp"),'w')
     taxon_dict={'root':1}
     node_out.write('\t|\t'.join(['1','1','no rank','','8','0','1','0','0','0','1','0','1',''])+'\t|\n')
+    name_out.write('\t|\t'.join(['1','root','','scientific name'])+'\t|\n')
     asm2id={}
     taxon_count=1
     with open(gtdbtax_file,'r') as handle:
